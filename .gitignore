@@ -4,3 +4,4 @@ transpiled
 /.idea/
 .prettierrc
 .cargo-ok
+update.sh
