@@ -225,7 +225,7 @@ describe('handle', () => {
     expect(msg).toMatchObject({ ip: newIP, success: true })
   })
 
-  it('uses supplied localIP if present', async () => {
+  it('uses supplied ip if provided', async () => {
     const payload = {
       zone_id: 'ZZZ',
       dns_record_id: 'XXX',

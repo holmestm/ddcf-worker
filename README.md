@@ -26,3 +26,17 @@ curl -X PATCH "https://ddcf.gravitaz.co.uk/" \
      -H "Content-Type: application/json" \
      --data '{"zone_id":"17027e56d602aef10f40f738170c2532","dns_record_id":"bfcd34d794559b5be83c5ccdad028b1d"}'
 ```
+
+# Optionally allows IP to be explicitly set useful for creating DNS entries for local IP ranges for clients that can't use mDNS e.g. Android
+
+```
+myip=`ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1'`
+curl -X PATCH "https://ddcf.gravitaz.co.uk/" \
+     -H "Authorization: Bearer xxx" \
+     -H "Content-Type: application/json" \
+     --data '{\
+        "zone_id":"17027e56d602aef10f40f738170c2532", \
+        "dns_record_id":"bfcd34d794559b5be83c5ccdad028b1d" \
+        "localIP":"$myip" \
+     }'
+```
