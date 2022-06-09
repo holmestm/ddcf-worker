@@ -1,63 +1,26 @@
 import { handleRequest } from '../src/handler'
-import fm, {
-  enableFetchMocks,
-  disableFetchMocks,
-  MockResponseInit,
-  MockParams,
-  MockResponseInitFunction,
-} from 'jest-fetch-mock'
 import * as dns from '../src/dns'
 import makeServiceWorkerEnv from 'service-worker-mock'
 
-enableFetchMocks()
+declare var global: any
 
-const sampleResponse = {
-  result: {
-    id: 'ZZZ',
-    zone_id: 'XXX',
-    zone_name: 'gravitaz.co.uk',
-    name: 'uk.gravitaz.co.uk',
-    type: 'A',
-    content: '127.0.0.1',
-    proxiable: false,
-    proxied: false,
-    ttl: 60,
-    locked: false,
-    meta: {
-      auto_added: false,
-      managed_by_apps: false,
-      managed_by_argo_tunnel: false,
-      source: 'primary',
-    },
-    created_on: '2022-02-09T12:19:58.579659Z',
-    modified_on: '2022-03-07T23:18:46.259094Z',
-  },
-  success: true,
-  errors: [],
-  messages: [],
+import nodeFetch from 'node-fetch'
+// Mocking fetch Web API using node-fetch
+if (typeof fetch === 'undefined') {
+  global.fetch = nodeFetch
+  //global.Request = nodeFetch.Request
 }
-
-const oldIP = '1.2.3.5'
-const newIP = '1.2.3.4'
-
-const mockedResponses: Array<
-  string | [string, MockParams] | MockResponseInitFunction
-> = [
-  { ...sampleResponse, result: { ...sampleResponse.result, content: oldIP } },
-  { ...sampleResponse, result: { ...sampleResponse.result, content: newIP } },
-].map((x) => [JSON.stringify(x), { status: 200 }])
 
 describe('handle', () => {
   beforeEach(() => {
     Object.assign(global, makeServiceWorkerEnv())
     jest.resetModules()
-    fetchMock.resetMocks()
   })
 
   const headerDict = {
     'Content-Type': 'application/json',
     Accept: 'application/json',
-    'x-real-ip': '',
+    'x-real-ip': '1.2.3.4',
     'Access-Control-Allow-Headers': 'Content-Type',
   }
 
@@ -82,15 +45,18 @@ describe('handle', () => {
       dns_record_id: 'XXX',
       token: 'ABC',
     }
-    headerDict['x-real-ip'] = oldIP
     const requestOptions = {
       method: 'POST',
       headers: new Headers(headerDict),
       body: JSON.stringify(payload),
     }
-    // emulate calling API endpoint
-    fetchMock.mockResponses(...mockedResponses)
-    const getSpy = jest.spyOn(dns, 'getIP')
+    const getSpy = jest
+      .spyOn(dns, 'getIP')
+      .mockImplementation(
+        jest.fn((args) =>
+          Promise.resolve({ ip: '1.2.3.4', success: true }),
+        ) as jest.Mock,
+      )
     const setSpy = jest.spyOn(dns, 'setIP')
     const response = await handleRequest(new Request('/', requestOptions))
 
@@ -108,18 +74,28 @@ describe('handle', () => {
       dns_record_id: 'XXX',
       token: 'ABC',
     }
-    headerDict['x-real-ip'] = newIP
     const requestOptions = {
       method: 'POST',
       headers: new Headers(headerDict),
       body: JSON.stringify(payload),
     }
 
-    fetchMock.mockResponses(...mockedResponses)
+    const oldIP = '1.2.3.5'
+    const newIP = '1.2.3.4'
 
-    const getSpy = jest.spyOn(dns, 'getIP')
-    const setSpy = jest.spyOn(dns, 'setIP')
+    const oldState = { ip: oldIP, success: true }
+    const newState = { ip: newIP, success: true }
 
+    const getSpy = jest
+      .spyOn(dns, 'getIP')
+      .mockImplementation(
+        jest.fn((args) => Promise.resolve(oldState)) as jest.Mock,
+      )
+    const setSpy = jest
+      .spyOn(dns, 'setIP')
+      .mockImplementation(
+        jest.fn((args) => Promise.resolve(newState)) as jest.Mock,
+      )
     const response = await handleRequest(new Request('/', requestOptions))
 
     expect(response.status).toEqual(200)
@@ -127,7 +103,7 @@ describe('handle', () => {
     expect(getSpy).toHaveBeenCalled()
     expect(getSpy).toHaveBeenCalledWith(payload)
     expect(setSpy).toHaveBeenCalled()
-    expect(setSpy).toHaveBeenCalledWith(payload, newIP)
+    expect(setSpy).toHaveBeenCalledWith(payload, '1.2.3.4')
 
     const msg = await response.json()
     expect(msg).toMatchObject({ ip: newIP, success: true })
