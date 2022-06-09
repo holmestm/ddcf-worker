@@ -36,9 +36,9 @@ const CfDnsRecordResource = async (
 
   const response = await fetch(url, init)
 
-  const responseJSON: any = await response.json();
+  const responseJSON: any = await response.json()
 
-  const { success, result } = responseJSON;
+  const { success, result } = responseJSON
 
   if (success) {
     const { content, modified_on, name } = result
@@ -64,4 +64,4 @@ const setIP: (args: CfArgsType, ip: string) => Promise<CfApiResponse> = async (
   })
 }
 
-export { getIP, setIP, CfArgsType, CfApiResponse }
+export { getIP, setIP, CfArgsType, CfApiResponse, ZoneData }
