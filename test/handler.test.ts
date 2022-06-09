@@ -40,11 +40,11 @@ const sampleResponse = {
 const oldIP = '1.2.3.5'
 const newIP = '1.2.3.4'
 
-const mockedResponses: Array<
-  string | [string, MockParams] | MockResponseInitFunction
-> = [
-  { ...sampleResponse, result: { ...sampleResponse.result, content: oldIP } },
-  { ...sampleResponse, result: { ...sampleResponse.result, content: newIP } },
+const { success, errors, messages, result } = sampleResponse
+
+const mockedResponses: Array<[string, MockParams]> = [
+  { success, errors, messages, result: { ...result, content: oldIP } },
+  { success, errors, messages, result: { ...result, content: newIP } },
 ].map((x) => [JSON.stringify(x), { status: 200 }])
 
 describe('handle', () => {
