@@ -1,3 +1,19 @@
+# Cloudflare Dynamic DNS Service Worker
+
+Template below used to create a simple service worker that will accept
+a POST of 
+```{
+    zone_id: value,
+    dns_record_id: value,
+    token: value
+}```
+
+On successful processing, the worker will update the DNS content attribute entry of the relevant dns record to be the apparent 
+external IP address from where the request came from. 
+
+1. npm install -g @cloudflare/wrangler
+2. wrangler dev
+
 # ʕ •́؈•̀) `worker-typescript-template`
 
 A batteries included template for kick starting a TypeScript Cloudflare worker project.

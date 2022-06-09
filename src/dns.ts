@@ -35,9 +35,9 @@ const callCF = async (
 
   if (results.success) {
     const { content, modified_on, name } = results.result
-    return { ip: content, modified_on, name }
+    return { ip: content, modified_on, name, success: true }
   } else {
-    return undefined
+    return { success: false }
   }
 }
 
