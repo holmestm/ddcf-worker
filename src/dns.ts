@@ -1,4 +1,4 @@
-type cfArgsType = {
+type CfArgsType = {
   zone_id: string
   dns_record_id: string
   token: string
@@ -17,8 +17,8 @@ type CfApiResponse = {
   name?: string
 }
 
-const callCF = async (
-  args: cfArgsType,
+const CfDnsRecordResource = async (
+  args: CfArgsType,
   options: RequestInitializerDict = {},
 ) => {
   const { zone_id, dns_record_id, token } = args
@@ -33,6 +33,7 @@ const callCF = async (
     },
     ...options,
   }
+
   const response = await fetch(url, init)
 
   const results: {
@@ -48,15 +49,15 @@ const callCF = async (
   }
 }
 
-const getIP: (args: cfArgsType) => Promise<CfApiResponse> = async (args) => {
-  return callCF(args)
+const getIP: (args: CfArgsType) => Promise<CfApiResponse> = async (args) => {
+  return CfDnsRecordResource(args)
 }
 
-const setIP: (args: cfArgsType, ip: string) => Promise<CfApiResponse> = async (
+const setIP: (args: CfArgsType, ip: string) => Promise<CfApiResponse> = async (
   args,
   ip,
 ) => {
-  return callCF(args, {
+  return CfDnsRecordResource(args, {
     method: 'PATCH',
     body: JSON.stringify({
       content: `${ip}`,
@@ -64,4 +65,4 @@ const setIP: (args: cfArgsType, ip: string) => Promise<CfApiResponse> = async (
   })
 }
 
-export { getIP, setIP, cfArgsType, CfApiResponse }
+export { getIP, setIP, CfArgsType, CfApiResponse }
