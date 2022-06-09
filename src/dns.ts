@@ -10,6 +10,13 @@ type ZoneData = {
   name: string
 }
 
+type CfApiResponse = {
+  success: boolean
+  ip?: string
+  modified_on?: string
+  name?: string
+}
+
 const callCF = async (
   args: cfArgsType,
   options: RequestInitializerDict = {},
@@ -41,11 +48,14 @@ const callCF = async (
   }
 }
 
-const getIP = async (args: cfArgsType) => {
+const getIP: (args: cfArgsType) => Promise<CfApiResponse> = async (args) => {
   return callCF(args)
 }
 
-const setIP = async (args: cfArgsType, ip: string) => {
+const setIP: (args: cfArgsType, ip: string) => Promise<CfApiResponse> = async (
+  args,
+  ip,
+) => {
   return callCF(args, {
     method: 'PATCH',
     body: JSON.stringify({
@@ -54,4 +64,4 @@ const setIP = async (args: cfArgsType, ip: string) => {
   })
 }
 
-export { getIP, setIP, cfArgsType }
+export { getIP, setIP, cfArgsType, CfApiResponse }

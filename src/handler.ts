@@ -24,13 +24,13 @@ const updateIP = async (args: cfArgsType, requestIP: string) => {
   })
 }
 
-export async function handleRequest(request: Request) {
-  let { headers, method } = request
-  let requestIP = headers.get('x-real-ip') || headers.get('cf-connecting-ip')
+export async function handleRequest(request: Request): Promise<Response> {
+  const { headers, method } = request
+  const requestIP = headers.get('x-real-ip') || headers.get('cf-connecting-ip')
 
   if (method == 'POST' && requestIP) {
-    const body: Object = await request.json()
-    let { zone_id, dns_record_id, token } = {
+    const body: Record<string, unknown> = await request.json()
+    const { zone_id, dns_record_id, token } = {
       zone_id: '',
       dns_record_id: '',
       token: getAuthToken(headers) || '',
