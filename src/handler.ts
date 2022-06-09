@@ -25,10 +25,10 @@ const updateIP = async (args: cfArgsType, requestIP: string) => {
 }
 
 export async function handleRequest(request: Request) {
-  let { headers } = request
+  let { headers, method } = request
   let requestIP = headers.get('x-real-ip') || headers.get('cf-connecting-ip')
 
-  if (request.method == 'POST' && requestIP) {
+  if (method == 'POST' && requestIP) {
     const body: Object = await request.json()
     let { zone_id, dns_record_id, token } = {
       zone_id: '',
@@ -37,7 +37,7 @@ export async function handleRequest(request: Request) {
       ...body,
     }
     if (zone_id && dns_record_id && token) {
-      return await updateIP({ zone_id, dns_record_id, token }, requestIP)
+      return updateIP({ zone_id, dns_record_id, token }, requestIP)
     }
   }
   return new Response('{ "success": false }', {

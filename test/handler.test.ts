@@ -1,11 +1,5 @@
 import { handleRequest } from '../src/handler'
-import fm, {
-  enableFetchMocks,
-  disableFetchMocks,
-  MockResponseInit,
-  MockParams,
-  MockResponseInitFunction,
-} from 'jest-fetch-mock'
+import { enableFetchMocks, MockParams } from 'jest-fetch-mock'
 import * as dns from '../src/dns'
 import makeServiceWorkerEnv from 'service-worker-mock'
 
@@ -82,24 +76,24 @@ describe('handle', () => {
       dns_record_id: 'XXX',
       token: 'ABC',
     }
-    headerDict['x-real-ip'] = oldIP
     const requestOptions = {
       method: 'POST',
-      headers: new Headers(headerDict),
+      headers: new Headers({ ...headerDict, 'x-real-ip': oldIP }),
       body: JSON.stringify(payload),
     }
     // emulate calling API endpoint
     fetchMock.mockResponses(...mockedResponses)
-    const getSpy = jest.spyOn(dns, 'getIP')
-    const setSpy = jest.spyOn(dns, 'setIP')
+    const getIP = jest.spyOn(dns, 'getIP')
+    const setIP = jest.spyOn(dns, 'setIP')
     const response = await handleRequest(new Request('/', requestOptions))
 
+    expect(fetch).toHaveBeenCalledTimes(1)
     expect(response.status).toEqual(200)
     expect(response.headers.get('content-type')).toEqual('application/json')
-    expect(getSpy).toHaveBeenCalledWith(payload)
-    expect(setSpy).not.toHaveBeenCalled()
+    expect(getIP).toHaveBeenCalledWith(payload)
+    expect(setIP).not.toHaveBeenCalled()
 
-    getSpy.mockRestore()
+    getIP.mockRestore()
   })
 
   it('changes dns if ip changed', async () => {
@@ -108,30 +102,65 @@ describe('handle', () => {
       dns_record_id: 'XXX',
       token: 'ABC',
     }
-    headerDict['x-real-ip'] = newIP
     const requestOptions = {
       method: 'POST',
-      headers: new Headers(headerDict),
+      headers: new Headers({ ...headerDict, 'cf-connecting-ip': newIP }),
       body: JSON.stringify(payload),
     }
 
     fetchMock.mockResponses(...mockedResponses)
 
-    const getSpy = jest.spyOn(dns, 'getIP')
-    const setSpy = jest.spyOn(dns, 'setIP')
+    const getIP = jest.spyOn(dns, 'getIP')
+    const setIP = jest.spyOn(dns, 'setIP')
 
     const response = await handleRequest(new Request('/', requestOptions))
 
+    expect(fetch).toHaveBeenCalledTimes(2)
     expect(response.status).toEqual(200)
     expect(response.headers.get('content-type')).toEqual('application/json')
-    expect(getSpy).toHaveBeenCalled()
-    expect(getSpy).toHaveBeenCalledWith(payload)
-    expect(setSpy).toHaveBeenCalled()
-    expect(setSpy).toHaveBeenCalledWith(payload, newIP)
+    expect(getIP).toHaveBeenCalledWith(payload)
+    expect(setIP).toHaveBeenCalledWith(payload, newIP)
 
     const msg = await response.json()
     expect(msg).toMatchObject({ ip: newIP, success: true })
 
-    getSpy.mockRestore()
+    getIP.mockRestore()
+    setIP.mockRestore()
+  })
+
+  it('works with bearer token', async () => {
+    const token = 'ABC'
+    const payload = {
+      zone_id: 'ZZZ',
+      dns_record_id: 'XXX',
+    }
+    const requestOptions = {
+      method: 'POST',
+      headers: new Headers({
+        ...headerDict,
+        'cf-connecting-ip': newIP,
+        authorization: `Bearer ${token}`,
+      }),
+      body: JSON.stringify(payload),
+    }
+
+    fetchMock.mockResponses(...mockedResponses)
+
+    const getIP = jest.spyOn(dns, 'getIP')
+    const setIP = jest.spyOn(dns, 'setIP')
+
+    const response = await handleRequest(new Request('/', requestOptions))
+
+    expect(fetch).toHaveBeenCalledTimes(2)
+    expect(response.status).toEqual(200)
+    expect(response.headers.get('content-type')).toEqual('application/json')
+    expect(getIP).toHaveBeenCalledWith({ ...payload, token })
+    expect(setIP).toHaveBeenCalledWith({ ...payload, token }, newIP)
+
+    const msg = await response.json()
+    expect(msg).toMatchObject({ ip: newIP, success: true })
+
+    getIP.mockRestore()
+    setIP.mockRestore()
   })
 })
