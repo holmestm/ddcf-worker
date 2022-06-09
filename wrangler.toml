@@ -10,7 +10,7 @@ account_id = "2d8991f7fef2afcf3748f55f827d9b87"
 route = "https://ddcf.gravitaz.co.uk/"
 
 [build]
-command = "npm install && npm run build"
+command = "npm install-ci-test && npm run build"
 [build.upload]
 format = "service-worker"
 

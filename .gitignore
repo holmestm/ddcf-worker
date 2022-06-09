@@ -5,4 +5,3 @@ transpiled
 .prettierrc
 .cargo-ok
 update.sh
-package-lock.json
