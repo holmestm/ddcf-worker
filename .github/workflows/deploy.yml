@@ -1,12 +1,12 @@
-name: Deploy
+name: Deploy to Cloudflare Workers
 on:
   push:
     branches:
       - main
   repository_dispatch:
-
 jobs:
   deploy:
+    name: Deploy
     runs-on: ubuntu-latest
     environment: 'Cloudflare Gravitaz Workers'
     timeout-minutes: 60

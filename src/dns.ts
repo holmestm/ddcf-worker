@@ -36,16 +36,15 @@ const CfDnsRecordResource = async (
 
   const response = await fetch(url, init)
 
-  const results: {
-    success: boolean
-    result: ZoneData
-  } = await response.json()
+  const responseJSON: any = await response.json();
 
-  if (results.success) {
-    const { content, modified_on, name } = results.result
+  const { success, result } = responseJSON;
+
+  if (success) {
+    const { content, modified_on, name } = result
     return { ip: content, modified_on, name, success: true }
   } else {
-    return { success: false }
+    return { ...responseJSON }
   }
 }
 
