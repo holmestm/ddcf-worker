@@ -1,5 +1,5 @@
 import { handleRequest } from '../src/handler'
-import { enableFetchMocks, MockParams } from 'jest-fetch-mock'
+import { enableFetchMocks } from 'jest-fetch-mock'
 import * as dns from '../src/dns'
 import makeServiceWorkerEnv from 'service-worker-mock'
 
