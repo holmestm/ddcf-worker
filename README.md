@@ -32,11 +32,12 @@ You provision a service within Cloudflare, and POST a set of security tokens ove
 1. Create an account on Cloudflare
 2. Migrate/Register a domain name with this account (Zone)
 3. Create a subdomain within that Zone
-4. Create an Access Token to use with your zone
-5. Use that token to with the scripts in util - getzone.sh and getdns.sh to get your zone id and dns record id
-6. Use those values to update the file util/update.sh
-7. Run the update.sh file to update your hostname with your dynamic ip address
-8. Schedule a task with crontab to re-run that file every 30 minutes or so
+4. Use the scripts in ./util to determine your zone id and dns record id
+5. Create an Access Token to use with your zone
+6. Use that token to with the scripts in util - getzone.sh and getdns.sh to get your zone id and dns record id
+7. Use those values to update the file util/update.sh
+8. Run the update.sh file to update your hostname with your dynamic ip address
+9. Schedule a task with crontab to re-run that file every 30 minutes or so
 
 update.sh
 ```
@@ -46,7 +47,9 @@ curl -X PATCH "https://ddcf.gravitaz.co.uk/" \
      --data '{"zone_id":"<myzoneid>","dns_record_id":"<mydnsrecordid>"}'
 ```
 
-## Optionally allows IP to be explicitly set useful for creating DNS entries for local IP ranges for clients that can't use mDNS e.g. Android
+### Optional localIP property
+
+LocalIP allows a IP value to be specified in place of the detected address. Useful for creating DNS entries for local IP ranges for clients that can't use mDNS e.g. Android. 
 
 ```
 myip=`ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1'`
@@ -60,4 +63,4 @@ curl -X PATCH "https://ddcf.gravitaz.co.uk/" \
      }'
 ```
 
-You probably don't need that...
+You probably don't need this, and you can probably do this more simply using a direct API call.
