@@ -61,3 +61,5 @@ curl -X PATCH "https://ddcf.gravitaz.co.uk/" \
 2. clone the repo to your local file system - https://cli.github.com/
 3. npm install
 4. npm run deploy
+5. re-run util/create_script.sh passing the resulting cloudflare worker domain name as a 4th parameter
+6. bask in a warm sense of accomplishment
