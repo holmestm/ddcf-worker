@@ -19,7 +19,7 @@ type CfApiResponse = {
 
 const CfDnsRecordResource = async (
   args: CfArgsType,
-  options: RequestInitializerDict = {},
+  options: Record<string, any> = {},
 ) => {
   const { zone_id, dns_record_id, token } = args
   const url = `https://api.cloudflare.com/client/v4/zones/${zone_id}/dns_records/${dns_record_id}`
@@ -64,4 +64,6 @@ const setIP: (args: CfArgsType, ip: string) => Promise<CfApiResponse> = async (
   })
 }
 
-export { getIP, setIP, CfArgsType, CfApiResponse, ZoneData }
+export { getIP, setIP }
+
+export type { CfArgsType, CfApiResponse, ZoneData }

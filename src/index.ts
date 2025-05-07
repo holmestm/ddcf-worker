@@ -1,5 +1,8 @@
 import { handleRequest } from './handler'
 
-addEventListener('fetch', (event) => {
-  event.respondWith(handleRequest(event.request))
-})
+export default {
+  async fetch(request): Promise<Response> {
+    // Handle the request using the handleRequest function
+    return handleRequest(request)
+  },
+} satisfies ExportedHandler;

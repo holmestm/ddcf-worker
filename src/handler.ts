@@ -3,12 +3,9 @@ import { getIP, setIP, CfArgsType } from './dns'
 const getAuthToken = (headers: Headers) => {
   const authHeader = headers.get('authorization')
   if (authHeader && authHeader.startsWith('Bearer ')) {
-    const authArray = authHeader.split(' ')
-    if (authArray.length == 2) {
-      return authArray[1]
-    }
+    return authHeader.split(' ').splice(1).join(' ');
   }
-  return undefined
+  return undefined;
 }
 
 const updateIP = async (args: CfArgsType, requestIP: string) => {

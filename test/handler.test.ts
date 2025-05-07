@@ -1,11 +1,32 @@
 import { handleRequest } from '../src/handler'
-import { enableFetchMocks } from 'jest-fetch-mock'
+import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
 import * as dns from '../src/dns'
 import makeServiceWorkerEnv from 'service-worker-mock'
 
-enableFetchMocks()
-const getIP = jest.spyOn(dns, 'getIP')
-const setIP = jest.spyOn(dns, 'setIP')
+// Setup fetch mock
+const fetchMock = vi.hoisted(() => ({
+  mockResponses: (...responses: string[]) => {
+    let callCount = 0
+    globalThis.fetch = vi.fn().mockImplementation(() => {
+      const response = responses[callCount] || responses[responses.length - 1]
+      callCount = Math.min(callCount + 1, responses.length - 1)
+      return Promise.resolve(new Response(response))
+    })
+  },
+  resetMocks: () => {
+    globalThis.fetch = vi.fn()
+  }
+}))
+
+// Mock DNS functions
+vi.mock('../src/dns', async (importOriginal) => {
+  const actual = await importOriginal() as { getIP: (payload: unknown) => Promise<{ ip: string, success: boolean }>, setIP: (payload: unknown, ip: string) => Promise<{ success: boolean }> }
+  return {
+    ...actual,
+    getIP: vi.spyOn(actual, 'getIP'),
+    setIP: vi.spyOn(actual, 'setIP'),
+  }
+})
 
 const sampleResponse = {
   result: {
@@ -45,19 +66,17 @@ const responses = [
 
 const mockedResponses = responses.map((x) => JSON.stringify(x))
 
-//const it1 = (_a: unknown, _b: unknown) => true
-
 describe('handle', () => {
   beforeEach(() => {
-    Object.assign(global, makeServiceWorkerEnv())
-    jest.resetModules()
+    Object.assign(globalThis, makeServiceWorkerEnv())
+    vi.resetModules()
     fetchMock.resetMocks()
     fetchMock.mockResponses(...mockedResponses)
   })
 
   afterEach(() => {
-    getIP.mockClear()
-    setIP.mockClear()
+    vi.mocked(dns.getIP).mockClear()
+    vi.mocked(dns.setIP).mockClear()
   })
 
   const headersMap = {
@@ -111,8 +130,8 @@ describe('handle', () => {
 
     expect(response.status).toEqual(200)
     expect(response.headers.get('content-type')).toEqual('application/json')
-    expect(getIP).toHaveBeenCalledWith(payload)
-    expect(setIP).not.toHaveBeenCalled()
+    expect(dns.getIP).toHaveBeenCalledWith(payload)
+    expect(dns.setIP).not.toHaveBeenCalled()
     expect(fetch).toHaveBeenCalledTimes(1)
   })
 
@@ -129,9 +148,9 @@ describe('handle', () => {
 
     const response = await handleRequest(new Request('/', requestOptions))
     expect(response.status).toEqual(406)
-    expect(getIP).not.toHaveBeenCalled()
-    expect(setIP).not.toHaveBeenCalled()
-    expect(fetchMock).not.toHaveBeenCalled()
+    expect(dns.getIP).not.toHaveBeenCalled()
+    expect(dns.setIP).not.toHaveBeenCalled()
+    expect(fetch).not.toHaveBeenCalled()
   })
 
   it('fails if no zone_id', async () => {
@@ -147,9 +166,9 @@ describe('handle', () => {
 
     const response = await handleRequest(new Request('/', requestOptions))
     expect(response.status).toEqual(406)
-    expect(getIP).not.toHaveBeenCalled()
-    expect(setIP).not.toHaveBeenCalled()
-    expect(fetchMock).not.toHaveBeenCalled()
+    expect(dns.getIP).not.toHaveBeenCalled()
+    expect(dns.setIP).not.toHaveBeenCalled()
+    expect(fetch).not.toHaveBeenCalled()
   })
 
   it('fails if no dns record id', async () => {
@@ -165,9 +184,9 @@ describe('handle', () => {
 
     const response = await handleRequest(new Request('/', requestOptions))
     expect(response.status).toEqual(406)
-    expect(getIP).not.toHaveBeenCalled()
-    expect(setIP).not.toHaveBeenCalled()
-    expect(fetchMock).not.toHaveBeenCalled()
+    expect(dns.getIP).not.toHaveBeenCalled()
+    expect(dns.setIP).not.toHaveBeenCalled()
+    expect(fetch).not.toHaveBeenCalled()
   })
 
   it('changes dns if ip changed', async () => {
@@ -187,8 +206,8 @@ describe('handle', () => {
     expect(fetch).toHaveBeenCalledTimes(2)
     expect(response.status).toEqual(200)
     expect(response.headers.get('content-type')).toEqual('application/json')
-    expect(getIP).toHaveBeenCalledWith(payload)
-    expect(setIP).toHaveBeenCalledWith(payload, newIP)
+    expect(dns.getIP).toHaveBeenCalledWith(payload)
+    expect(dns.setIP).toHaveBeenCalledWith(payload, newIP)
 
     const msg = await response.json()
     expect(msg).toMatchObject({ ip: newIP, success: true })
@@ -210,16 +229,13 @@ describe('handle', () => {
       body: JSON.stringify(payload),
     }
 
-    const getIP = jest.spyOn(dns, 'getIP')
-    const setIP = jest.spyOn(dns, 'setIP')
-
     const response = await handleRequest(new Request('/', requestOptions))
 
-    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(fetch).toHaveBeenCalledTimes(2)
     expect(response.status).toEqual(200)
     expect(response.headers.get('content-type')).toEqual('application/json')
-    expect(getIP).toHaveBeenCalledWith({ ...payload, token })
-    expect(setIP).toHaveBeenCalledWith({ ...payload, token }, newIP)
+    expect(dns.getIP).toHaveBeenCalledWith({ ...payload, token })
+    expect(dns.setIP).toHaveBeenCalledWith({ ...payload, token }, newIP)
 
     const msg = await response.json()
     expect(msg).toMatchObject({ ip: newIP, success: true })
@@ -238,7 +254,7 @@ describe('handle', () => {
       body: JSON.stringify(payload),
     }
 
-    const responses = [
+    const customResponses = [
       JSON.parse(
         JSON.stringify({ ...sampleResponse, result: { content: oldIP } }),
       ),
@@ -246,23 +262,23 @@ describe('handle', () => {
         JSON.stringify({ ...sampleResponse, result: { content: lclIP } }),
       ),
     ]
-    const mockedResponses = responses.map((x) => JSON.stringify(x))
+    const customMockedResponses = customResponses.map((x) => JSON.stringify(x))
     fetchMock.resetMocks()
-    fetchMock.mockResponses(...mockedResponses)
+    fetchMock.mockResponses(...customMockedResponses)
 
     const response = await handleRequest(new Request('/', requestOptions))
 
-    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(fetch).toHaveBeenCalledTimes(2)
     expect(response.status).toEqual(200)
     expect(response.headers.get('content-type')).toEqual('application/json')
-    expect(getIP).toHaveBeenCalledWith(
+    expect(dns.getIP).toHaveBeenCalledWith(
       expect.objectContaining({
         zone_id: expect.any(String),
         dns_record_id: expect.any(String),
         token: expect.any(String),
       }),
     )
-    expect(setIP).toHaveBeenCalledWith(
+    expect(dns.setIP).toHaveBeenCalledWith(
       expect.objectContaining({
         zone_id: expect.any(String),
         dns_record_id: expect.any(String),
