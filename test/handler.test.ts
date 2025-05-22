@@ -84,7 +84,16 @@ describe('handle', () => {
     Accept: 'application/json',
     'x-real-ip': '',
     'Access-Control-Allow-Headers': 'Content-Type',
+    'cf-ipcountry': 'GB',
   }
+
+  type Env = {
+    VALID_COUNTRIES: string;
+  };
+
+  const config: Env = {
+    VALID_COUNTRIES: 'GB,UK',
+  };
 
   it('mocks work as expected', async () => {
     const payload = {
@@ -126,13 +135,33 @@ describe('handle', () => {
       body: JSON.stringify(payload),
     }
     // emulate calling API endpoint
-    const response = await handleRequest(new Request('/', requestOptions))
+    const response = await handleRequest(new Request('/', requestOptions), config)
 
     expect(response.status).toEqual(200)
     expect(response.headers.get('content-type')).toEqual('application/json')
     expect(dns.getIP).toHaveBeenCalledWith(payload)
     expect(dns.setIP).not.toHaveBeenCalled()
     expect(fetch).toHaveBeenCalledTimes(1)
+  })
+
+  it('fails if invalid country', async () => {
+    const payload = {
+      zone_id: 'ZZZ',
+      dns_record_id: 'XXX',
+      token: 'ABC',
+    }
+    const requestOptions = {
+      method: 'POST',
+      headers: new Headers({ ...headersMap, 'x-real-ip': oldIP, 'cf-ipcountry': 'ZZ' }),
+      body: JSON.stringify(payload),
+    }
+    // emulate calling API endpoint
+    const response = await handleRequest(new Request('/', requestOptions), config)
+
+    expect(response.status).toEqual(406)
+    expect(dns.getIP).not.toHaveBeenCalled()
+    expect(dns.setIP).not.toHaveBeenCalled()
+    expect(fetch).not.toHaveBeenCalled()
   })
 
   it('fails if no token', async () => {
@@ -146,7 +175,7 @@ describe('handle', () => {
       body: JSON.stringify({ ...payload }),
     }
 
-    const response = await handleRequest(new Request('/', requestOptions))
+    const response = await handleRequest(new Request('/', requestOptions), config)
     expect(response.status).toEqual(406)
     expect(dns.getIP).not.toHaveBeenCalled()
     expect(dns.setIP).not.toHaveBeenCalled()
@@ -164,7 +193,7 @@ describe('handle', () => {
       body: JSON.stringify({ ...payload }),
     }
 
-    const response = await handleRequest(new Request('/', requestOptions))
+    const response = await handleRequest(new Request('/', requestOptions), config)
     expect(response.status).toEqual(406)
     expect(dns.getIP).not.toHaveBeenCalled()
     expect(dns.setIP).not.toHaveBeenCalled()
@@ -182,7 +211,7 @@ describe('handle', () => {
       body: JSON.stringify({ ...payload }),
     }
 
-    const response = await handleRequest(new Request('/', requestOptions))
+    const response = await handleRequest(new Request('/', requestOptions), config)
     expect(response.status).toEqual(406)
     expect(dns.getIP).not.toHaveBeenCalled()
     expect(dns.setIP).not.toHaveBeenCalled()
@@ -201,7 +230,7 @@ describe('handle', () => {
       body: JSON.stringify(payload),
     }
 
-    const response = await handleRequest(new Request('/', requestOptions))
+    const response = await handleRequest(new Request('/', requestOptions), config)
 
     expect(fetch).toHaveBeenCalledTimes(2)
     expect(response.status).toEqual(200)
@@ -229,7 +258,7 @@ describe('handle', () => {
       body: JSON.stringify(payload),
     }
 
-    const response = await handleRequest(new Request('/', requestOptions))
+    const response = await handleRequest(new Request('/', requestOptions), config)
 
     expect(fetch).toHaveBeenCalledTimes(2)
     expect(response.status).toEqual(200)
@@ -266,7 +295,7 @@ describe('handle', () => {
     fetchMock.resetMocks()
     fetchMock.mockResponses(...customMockedResponses)
 
-    const response = await handleRequest(new Request('/', requestOptions))
+    const response = await handleRequest(new Request('/', requestOptions), config)
 
     expect(fetch).toHaveBeenCalledTimes(2)
     expect(response.status).toEqual(200)

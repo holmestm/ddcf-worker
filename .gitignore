@@ -5,3 +5,5 @@ transpiled
 .prettierrc
 .cargo-ok
 update.sh
+.env
+.dev.vars

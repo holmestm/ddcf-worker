@@ -9,7 +9,8 @@
 	"compatibility_date": "2025-04-03",
 	"observability": {
 		"enabled": true
-	}
+	},
+	"upload_source_maps": true,
 	/**
 	 * Smart Placement
 	 * Docs: https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement
@@ -26,8 +27,10 @@
 	/**
 	 * Environment Variables
 	 * https://developers.cloudflare.com/workers/wrangler/configuration/#environment-variables
+	 *
+	 * Define valid countries using the Cloudflare dashboard as a comma separated list e.g. UK,IE
 	 */
-	// "vars": { "MY_VARIABLE": "production_value" },
+	"vars": { "VALID_COUNTRIES": "XX" }
 	/**
 	 * Note: Use secrets to store sensitive data.
 	 * https://developers.cloudflare.com/workers/configuration/secrets/

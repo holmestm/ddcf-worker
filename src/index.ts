@@ -1,8 +1,8 @@
 import { handleRequest } from './handler'
 
 export default {
-  async fetch(request): Promise<Response> {
+  async fetch(request, env, _ctx): Promise<Response> {
     // Handle the request using the handleRequest function
-    return handleRequest(request)
+    return handleRequest(request, env)
   },
-} satisfies ExportedHandler;
+} satisfies ExportedHandler<Env>;

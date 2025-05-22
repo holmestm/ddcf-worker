@@ -1,12 +1,24 @@
 # Cloudflare Dynamic DNS Service Worker
 
+Experimental!
+
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=ddcf-worker)
+
 ## What is this for?
 
-This solution provides a simple way to obtain a hostname for a dynamic IP address using Cloudflare, for free. It requires you to register a domain on their platform - or migrate an existing domain - but they are really cheap, check it out. 
+This is a dynamic ip address solution for Cloudflare users. 
+A small piece of code is hosted as an API on Cloudflare's platform, and on receipt of a suitable HTTP POST request will use update the CNAME of a specified DNS record with the IP address that Cloudflare detects - meaning no need to make a separate call out to 'whatsmyip' or whatever.
+It requires you to use a domain managed on their platform, which may require you to migrate an existing domain - but they are really cheap, check it out. 
+I provide a small shell script that will help you create a small shell script that can be used to keep the DNS entry up to date - it's up to you to work out how to schedule when and how that script is run.
 
-It makes use of [Cloudflare Workers](https://developers.cloudflare.com/workers/), which are a way of deploying run time code within Cloudflare's cloud platform. If you keep your usage low, you won't get charged. It's free for modest use.
+### Tech Details
 
-You deploy a service within Cloudflare, and POST a set of security tokens over SSL to it. On receipt of the message, the service picks up the external IP address that the request came from through a header added by Cloudflare, and uses this along with the security tokens you provide to invoke Cloudflare's own APIs to update a DNS record of your choosing. So all you need to do then is create a scheduled job that makes an API call to an HTTPS endpoint with a JSON body that consists of 
+The solution makes use of [Cloudflare Workers](https://developers.cloudflare.com/workers/).
+
+You deploy a worker service within Cloudflare, and POST a set of security tokens over SSL to it. 
+
+Cloudflare adds a the 'X-real-ip' header to the call, which contains your external IP address. You also post additional information that can be used in a cloudflare API call to update the CNAME entry.
+
 ```
 {
     zone_id: <value>,
@@ -19,11 +31,14 @@ You deploy a service within Cloudflare, and POST a set of security tokens over S
 2. dns_record_id - corresponds to a subdomain e.g. home.example.com
 3. token - is a secure token you create within the Cloudflare web portal
 
-There is a handy bash script in the utils folder that will find out all the required values for you and create a script to do this. You just then to decide a way to run that script on a regular basis using cron or systemd timers. Up to you.
+Use the provided ./util/create_script.sh to create a script `ddcf-update.sh` by passing it parameters on the command line for
 
-Whenever you run that script, it will push the required data to the cloudflare worker which will in turn use Cloudflare APIs to update the DNS CNAME (e.g. home.example.com) with whatever your external IP address is. 
+1. PREFIX - subdomain e.g. home
+2. DOMAIN - the domain you registered with Cloudflare e.g. mydomain.com
+3. TOKEN - a secret token you create using the Cloudflare dashboard
+4. WORKER - the hostname of the worker you deploy on Cloudflare
 
-The beauty is that Cloudflare will detect your external IP address, and add it as a header to the API call - the Cloudflare worker simply picks this up and uses the token, zone and record id to call a Cloudflare API to update your CNAME.
+Once you have deployed your worker, you can run this script to check it is all working. You are welcome to use my server for now (unless usage starts to exceed my free limit, and now only if you live in the UK) but be aware you will be sending your secret tokens to my worker which you might want to consider.
 
 ## Additional Documentation
 
@@ -31,7 +46,7 @@ The beauty is that Cloudflare will detect your external IP address, and add it a
 2. [Cloudflare DNS service](https://developers.cloudflare.com/dns/)
 3. [Cloudflare API Tokens](https://developers.cloudflare.com/api/tokens/create/)
 
-## Procedure
+## Onboarding Process
 
 1. Create an account on Cloudflare
 2. Migrate/Register a domain name with this account (Zone) e.g. example.com
@@ -40,9 +55,10 @@ The beauty is that Cloudflare will detect your external IP address, and add it a
     1. Zone -> DNS -> Edit
     2. Include -> Specific Zone -> Your domain
 6. Use that token to with /util/create_script.sh passing parameters:
-    1. prefix of subdomain e.g. home (must have been already created in step 3 above)
-    2. domain to use e.g. example.com
-    3. token value created above
+    1. PREFIX - subdomain e.g. home
+    2. DOMAIN - the domain you registered with Cloudflare e.g. mydomain.com
+    3. TOKEN - a secret token you create using the Cloudflare dashboard
+    4. WORKER - the hostname of the worker you deploy on Cloudflare
 8. This will create a file _ddcf-update.sh_
 9. Run this using ./ddcf_update.sh to update your CNAME
 10. _Optionally_ Schedule a task with e.g. cron to re-run that file every 30 minutes or so
@@ -57,9 +73,11 @@ curl -X PATCH "https://ddcf.gravitaz.co.uk/" \
 
 ### Create your own worker
 
+Manual approach...
+
 1. [Install node and npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
-2. clone the repo to your local file system - https://cli.github.com/
+2. clone this repo to your local file system - https://cli.github.com/
 3. npm install
-4. npm run deploy
+4. npm run deploy - observe the cloudflare worker domain
 5. re-run util/create_script.sh passing the resulting cloudflare worker domain name as a 4th parameter
-6. bask in a warm sense of accomplishment
+6. use cron or whatever to schedule the regular running of the ddcf-update.sh script

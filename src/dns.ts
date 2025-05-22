@@ -1,4 +1,4 @@
-type CfArgsType = {
+type CFArgsType = {
   zone_id: string
   dns_record_id: string
   token: string
@@ -10,15 +10,15 @@ type ZoneData = {
   name: string
 }
 
-type CfApiResponse = {
+type CFApiResponse = {
   success: boolean
   ip?: string
   modified_on?: string
   name?: string
 }
 
-const CfDnsRecordResource = async (
-  args: CfArgsType,
+const cfDnsRecordResource = async (
+  args: CFArgsType,
   options: Record<string, any> = {},
 ) => {
   const { zone_id, dns_record_id, token } = args
@@ -48,15 +48,15 @@ const CfDnsRecordResource = async (
   }
 }
 
-const getIP: (args: CfArgsType) => Promise<CfApiResponse> = async (args) => {
-  return CfDnsRecordResource(args)
+const getIP: (args: CFArgsType) => Promise<CFApiResponse> = async (args) => {
+  return cfDnsRecordResource(args)
 }
 
-const setIP: (args: CfArgsType, ip: string) => Promise<CfApiResponse> = async (
+const setIP: (args: CFArgsType, ip: string) => Promise<CFApiResponse> = async (
   args,
   ip,
 ) => {
-  return CfDnsRecordResource(args, {
+  return cfDnsRecordResource(args, {
     method: 'PATCH',
     body: JSON.stringify({
       content: `${ip}`,
@@ -66,4 +66,4 @@ const setIP: (args: CfArgsType, ip: string) => Promise<CfApiResponse> = async (
 
 export { getIP, setIP }
 
-export type { CfArgsType, CfApiResponse, ZoneData }
+export type { CFArgsType as CfArgsType, CFApiResponse as CfApiResponse, ZoneData }
