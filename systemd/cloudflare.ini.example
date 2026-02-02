@@ -1,0 +1,7 @@
+# Cloudflare API credentials used by Certbot
+dns_cloudflare_api_token = ***your_cloudflare_api_token***
+
+# Target Domain Details (cloudflare specific)
+zone_id = ***your_zone_id***
+zone_record_id = ***your_record_id***
+

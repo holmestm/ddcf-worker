@@ -1,0 +1,10 @@
+[Unit]
+Description=Cloudflare Dynamic DNS Update
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/ddcf_update.sh
+LoadCredential=cloudflare.ini:/root/.secrets/cloudflare.ini
+
+[Install]
+WantedBy=multi-user.target

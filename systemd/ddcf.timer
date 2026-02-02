@@ -1,0 +1,12 @@
+[Unit]
+Description=Run Dynamic DNS update on a schedule
+
+[Timer]
+# Option A: Every day at 4 AM
+OnCalendar=*-*-* 04:00:00
+# Option B: Every 5 minutes (uncomment below if needed)
+# OnUnitActiveSec=5min
+Persistent=true
+
+[Install]
+WantedBy=timers.target
