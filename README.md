@@ -7,9 +7,9 @@ Experimental!
 ## What is this for?
 
 This is a dynamic ip address solution for Cloudflare users. 
-A small piece of code is hosted as an API on Cloudflare's platform, and on receipt of a suitable HTTP POST request will use update the CNAME of a specified DNS record with the IP address that Cloudflare detects - meaning no need to make a separate call out to 'whatsmyip' or whatever.
+A small piece of code is hosted as an API on Cloudflare's platform, and on receipt of a suitable HTTP POST request will update the CNAME of a specified DNS record with the IP address that Cloudflare detects - meaning no need to make a separate call out to 'whatsmyip' or whatever. Importantly no private information is stored on Cloudflare - all required information is provided as part of the message, see below.
 It requires you to use a domain managed on their platform, which may require you to migrate an existing domain - but they are really cheap, check it out. 
-I provide a small shell script that will help you create a small shell script that can be used to keep the DNS entry up to date - it's up to you to work out how to schedule when and how that script is run.
+I provide a small shell script that will help you create a small shell script that can be used to keep the DNS entry up to date - it's up to you to work out how to schedule when and how that script is run. Update: I've added some systemd files to help with this.
 
 ### Tech Details
 
@@ -81,3 +81,19 @@ Manual approach...
 4. npm run deploy - observe the cloudflare worker domain
 5. re-run util/create_script.sh passing the resulting cloudflare worker domain name as a 4th parameter
 6. use cron or whatever to schedule the regular running of the ddcf-update.sh script
+
+## Systemd
+
+In the systemd subdirectory, I've provided a service and timer file for use with systemd. Use the supplied script to create a 'secrets' file in much the same way as ddcf-update.sh above. 
+On my system I place this under /root/.secrets then update the ddcf.service file to reference that file then 
+
+```
+sudo mv ddcf.service /etc/systemd/system/
+sudo mv ddcf.timer /etc/systemd/system/
+sudo chmod 644 /etc/systemd/system/ddcf.service
+sudo chmod 644 /etc/systemd/system/ddcf.timer
+sudo systemctl daemon-reload
+sudo systemctl enable --now ddcf.timer
+```
+
+
