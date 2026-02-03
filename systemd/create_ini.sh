@@ -1,5 +1,9 @@
 #!/bin/bash
-# run with (e.g.) home mydomain.com ***MYTOKEN***
+# run with (e.g.) ./create_ini.sh home mydomain.com ***MYTOKEN*** - assuming you want the service to update the CNAME of home.mydomain.com 
+# so that it resolves your current dynamic ip address. 
+# This script will create a cloudflare.ini file, move this to a location that can be found by ddcf.service e.g. /root/.secrets/cloudflare.ini
+# ensure it is secure e.g. chmod 600 cloudflare.ini && chown root:root cloudflare.ini
+
 PREFIX=${1:-"$PREFIX"}
 DOMAIN=${2:-"$DOMAIN"}
 TOKEN=${3:-"$TOKEN"}
