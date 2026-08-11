@@ -34,16 +34,14 @@ export async function handleRequest(request: Request, env: Env): Promise<Respons
     })
   };
 
-  if (!externalIP) {
-    return new Response(`{ "success": false, "externalIP": "${externalIP}" }`, {
-      status: 500,
-      statusText: 'Unable to determine external IP',
-      headers: { 'content-type': 'application/json' },
-    })
-  }
+  if (method === 'POST') {
+    let body: Record<string, unknown> = {}
+    try {
+      body = await request.json()
+    } catch {
+      body = {}
+    }
 
-  if (method == 'POST' && externalIP) {
-    const body: Record<string, unknown> = await request.json()
     const { zone_id, dns_record_id, token, localIP } = {
       zone_id: '',
       dns_record_id: '',
@@ -51,13 +49,29 @@ export async function handleRequest(request: Request, env: Env): Promise<Respons
       localIP: externalIP,
       ...body,
     }
-    if (zone_id && dns_record_id && token) {
-      return updateIP({ zone_id, dns_record_id, token }, localIP, externalCountry)
+
+    if (!zone_id || !dns_record_id || !token) {
+      return new Response('{ "success": false }', {
+        status: 406,
+        statusText: 'Insufficient or incorrect body content',
+        headers: { 'content-type': 'application/json' },
+      })
     }
+
+    if (!localIP) {
+      return new Response(`{ "success": false, "localIP": "${localIP}" }`, {
+        status: 500,
+        statusText: 'Unable to resolve new IP',
+        headers: { 'content-type': 'application/json' },
+      })
+    }
+
+    return updateIP({ zone_id, dns_record_id, token }, localIP, externalCountry)
   }
+
   return new Response('{ "success": false }', {
     status: 406,
-    statusText: 'Insufficient or incorrect body content',
+    statusText: 'Unsupported method',
     headers: { 'content-type': 'application/json' },
   })
 }
