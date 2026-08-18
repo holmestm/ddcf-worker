@@ -23,55 +23,68 @@ const updateIP = async (args: CfArgsType, requestIP: string, countryCode: string
 
 export async function handleRequest(request: Request, env: Env): Promise<Response> {
   const { headers, method } = request
+
+  if (method !== 'POST') {
+    return new Response(JSON.stringify({ success: false }), {
+      status: 405,
+      statusText: 'Method Not Allowed',
+      headers: { 'content-type': 'application/json' },
+    })
+  }
+
   const externalIP = headers.get('x-real-ip') || headers.get('cf-connecting-ip')
   const externalCountry = headers.get('cf-ipcountry') || 'XX';
 
   if (env.VALID_COUNTRIES && externalCountry && !env.VALID_COUNTRIES.split(',').includes(externalCountry)) {
-    return new Response(`{ "success": false, "countryCode": "${externalCountry}" }`, {
+    return new Response(JSON.stringify({ success: false, countryCode: externalCountry }), {
       status: 406,
       statusText: 'Unsupported country',
       headers: { 'content-type': 'application/json' },
     })
   };
 
-  if (method === 'POST') {
-    let body: Record<string, unknown> = {}
-    try {
-      body = await request.json()
-    } catch {
-      body = {}
-    }
-
-    const { zone_id, dns_record_id, token, localIP } = {
-      zone_id: '',
-      dns_record_id: '',
-      token: getAuthToken(headers) || '',
-      localIP: externalIP,
-      ...body,
-    }
-
-    if (!zone_id || !dns_record_id || !token) {
-      return new Response('{ "success": false }', {
-        status: 406,
-        statusText: 'Insufficient or incorrect body content',
-        headers: { 'content-type': 'application/json' },
-      })
-    }
-
-    if (!localIP) {
-      return new Response(`{ "success": false, "localIP": "${localIP}" }`, {
-        status: 500,
-        statusText: 'Unable to resolve new IP',
-        headers: { 'content-type': 'application/json' },
-      })
-    }
-
-    return updateIP({ zone_id, dns_record_id, token }, localIP, externalCountry)
+  let body: Record<string, unknown> = {}
+  try {
+    body = await request.json()
+  } catch {
+    return new Response(JSON.stringify({ success: false }), {
+      status: 400,
+      statusText: 'Invalid JSON',
+      headers: { 'content-type': 'application/json' },
+    })
   }
 
-  return new Response('{ "success": false }', {
-    status: 406,
-    statusText: 'Unsupported method',
-    headers: { 'content-type': 'application/json' },
-  })
+  if (!externalIP) {
+    return new Response(JSON.stringify({ success: false }), {
+      status: 400,
+      statusText: 'Unable to resolve external IP',
+      headers: { 'content-type': 'application/json' },
+    })
+  }
+
+  const { zone_id, dns_record_id, token, localIP } = {
+    zone_id: '',
+    dns_record_id: '',
+    token: getAuthToken(headers) || '',
+    localIP: externalIP,
+    ...body,
+  }
+
+  if (!zone_id || !dns_record_id || !token) {
+    return new Response(JSON.stringify({ success: false }), {
+      status: 406,
+      statusText: 'Insufficient or incorrect body content',
+      headers: { 'content-type': 'application/json' },
+    })
+  }
+
+  if (!localIP) {
+    return new Response(JSON.stringify({ success: false }), {
+      status: 500,
+      statusText: 'Unable to resolve new IP',
+      headers: { 'content-type': 'application/json' },
+    })
+  }
+
+  return updateIP({ zone_id, dns_record_id, token }, localIP, externalCountry)
 }

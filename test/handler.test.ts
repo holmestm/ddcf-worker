@@ -176,7 +176,7 @@ describe('handle', () => {
     }
 
     const response = await handleRequest(new Request('/', requestOptions), config)
-    expect(response.status).toEqual(406)
+    expect(response.status).toEqual(400)
     expect(dns.getIP).not.toHaveBeenCalled()
     expect(dns.setIP).not.toHaveBeenCalled()
     expect(fetch).not.toHaveBeenCalled()
@@ -194,7 +194,7 @@ describe('handle', () => {
     }
 
     const response = await handleRequest(new Request('/', requestOptions), config)
-    expect(response.status).toEqual(406)
+    expect(response.status).toEqual(400)
     expect(dns.getIP).not.toHaveBeenCalled()
     expect(dns.setIP).not.toHaveBeenCalled()
     expect(fetch).not.toHaveBeenCalled()
@@ -212,7 +212,7 @@ describe('handle', () => {
     }
 
     const response = await handleRequest(new Request('/', requestOptions), config)
-    expect(response.status).toEqual(406)
+    expect(response.status).toEqual(400)
     expect(dns.getIP).not.toHaveBeenCalled()
     expect(dns.setIP).not.toHaveBeenCalled()
     expect(fetch).not.toHaveBeenCalled()
