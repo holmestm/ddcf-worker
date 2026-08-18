@@ -7,3 +7,4 @@ transpiled
 update.sh
 .env
 .dev.vars
+/util/ddcf-update.sh
