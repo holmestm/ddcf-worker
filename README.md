@@ -84,8 +84,8 @@ Manual approach...
 
 ## Systemd
 
-In the systemd subdirectory, I've provided a service and timer file for use with systemd. Use the supplied script to create a 'secrets' file in much the same way as ddcf-update.sh above. 
-On my system I place this under /root/.secrets then update the ddcf.service file to reference that file then 
+In the systemd subdirectory, I've provided a service and timer file for use with systemd. Use ./systemd/create_ini.sh to create a cloudflare.ini configuration file in much the same way as ddcf-update.sh above. 
+On my system I place this under /root/.secrets then update the ddcf.service file to reference that location. For example, edit the ExecStart line in ddcf.service to point to your cloudflare.ini path, then 
 
 ```
 sudo mv ddcf.service /etc/systemd/system/
